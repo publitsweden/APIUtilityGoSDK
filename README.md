@@ -10,7 +10,12 @@ go get github.com/publitsweden/APIUtilityGoSDK
 ```
 
 ## Usage
-See the Godocs: https://golang.org/pkg/github.com/publitsweden/APIUtilityGoSDK/ for more information about implementation, examples and usage.
+See the Godocs: 
+* https://golang.org/pkg/github.com/publitsweden/APIUtilityGoSDK/APILog
+* https://golang.org/pkg/github.com/publitsweden/APIUtilityGoSDK/client
+* https://golang.org/pkg/github.com/publitsweden/APIUtilityGoSDK/common
+
+for more information about implementation, examples and usage.
 
 ### Client
 The client package contains the client.Client struct which aids with performing requests agains the Publit APIs.
