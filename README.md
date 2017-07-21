@@ -1,3 +1,5 @@
+[![GoDoc](https://godoc.org/github.com/publitsweden/APIUtilityGoSDK/common?status.svg)](https://godoc.org/github.com/publitsweden/APIUtilityGoSDK/common)
+
 # APIUtilityGoSDK
 
 This collection of packages includes utility functions and objects used to communicate with the Publit APIs.
