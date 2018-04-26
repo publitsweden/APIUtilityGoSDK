@@ -4,11 +4,12 @@
 package common
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
+	"reflect"
 	"strings"
 	"time"
-	"errors"
 )
 
 // General query string constants.
@@ -191,8 +192,8 @@ type AttrQuery struct {
 
 // Attribute args struct.
 type AttrArgs struct {
-	Operator   Operator
-	Combinator Combinator
+	Operator   []Operator
+	Combinator []Combinator
 }
 
 // Helper to set attribute filters to API query.
@@ -201,13 +202,27 @@ func QueryAttr(attributes ...AttrQuery) func(q url.Values) {
 	return func(q url.Values) {
 		for _, v := range attributes {
 			q.Add(v.Name, v.Value)
-			if v.Args != (AttrArgs{}) {
-				argstr := fmt.Sprintf("%v;%v", v.Args.Operator.AsString(), v.Args.Combinator.AsString())
+			if !v.Args.IsEmpty() {
 				argsAttr := fmt.Sprintf("%v%v", v.Name, QUERY_ARGS_SUFFIX)
+
+				opstr := []string{}
+				for _, op := range v.Args.Operator {
+					opstr = append(opstr, op.AsString())
+				}
+				combstr := []string{}
+				for _, comb := range v.Args.Combinator {
+					combstr = append(combstr, comb.AsString())
+				}
+				argstr := fmt.Sprintf("%v;%v", strings.Join(opstr[:], ","), strings.Join(combstr[:], ","))
+
 				q.Add(argsAttr, argstr)
 			}
 		}
 	}
+}
+
+func (a AttrArgs) IsEmpty() bool {
+	return reflect.DeepEqual(a, AttrArgs{})
 }
 
 // Converts Publit style times to Time.

@@ -2,11 +2,11 @@ package common
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 	"testing"
 	"time"
-	"net/http"
 )
 
 func TestCanSetLimitQueryString(t *testing.T) {
@@ -69,8 +69,8 @@ func TestCanSetAuxiliaryQueryString(t *testing.T) {
 func TestOrderDirEnumCanBeViewedAsString(t *testing.T) {
 	t.Parallel()
 	orders := map[string]OrderDir{
-		"ASC": ORDER_DIR_ASC,
-		"DESC":  ORDER_DIR_DESC,
+		"ASC":  ORDER_DIR_ASC,
+		"DESC": ORDER_DIR_DESC,
 	}
 
 	for expected, c := range orders {
@@ -218,8 +218,8 @@ func TestCanSetAttributeQuery(t *testing.T) {
 					Name:  "myAttr",
 					Value: "myValue",
 					Args: AttrArgs{
-						Operator:   OPERATOR_EQUAL,
-						Combinator: COMBINATOR_AND,
+						Operator:   []Operator{OPERATOR_EQUAL},
+						Combinator: []Combinator{COMBINATOR_AND},
 					},
 				},
 			}
@@ -232,7 +232,7 @@ func TestCanSetAttributeQuery(t *testing.T) {
 
 			assertQueryStringEqual(setAttr.Name, setAttr.Value, q, t)
 
-			expectedArgs := fmt.Sprintf("%v;%v", setAttr.Args.Operator.AsString(), setAttr.Args.Combinator.AsString())
+			expectedArgs := fmt.Sprintf("%v;%v", setAttr.Args.Operator[0].AsString(), setAttr.Args.Combinator[0].AsString())
 			assertQueryStringEqual(setAttr.Name+QUERY_ARGS_SUFFIX, expectedArgs, q, t)
 		},
 	)
@@ -293,7 +293,7 @@ func TestConversionToPublitTimeFailsIfNotCorrectlyFormated(t *testing.T) {
 
 func TestCanParsePublitBoolToBool(t *testing.T) {
 	t.Parallel()
-	publitBools := map[PublitBool]bool{"True":true,"TRUE":true,"true":true,"False":false,"FALSE":false,"false":false}
+	publitBools := map[PublitBool]bool{"True": true, "TRUE": true, "true": true, "False": false, "FALSE": false, "false": false}
 
 	for pb, b := range publitBools {
 		cb := pb.ConvertPublitBoolToBool()
@@ -325,10 +325,10 @@ func TestCanGetErrorFromAPIErrorResponse(t *testing.T) {
 		t.Error("No error returned but was expecting one.")
 	}
 
-	expectedError := fmt.Sprintf(`Code: "%v", Type: "%v", Combined info: "%v"`, e.Code, e.Type, e.CombinedInfo);
+	expectedError := fmt.Sprintf(`Code: "%v", Type: "%v", Combined info: "%v"`, e.Code, e.Type, e.CombinedInfo)
 
 	if err.Error() != expectedError {
-		t.Errorf(`Error string did not match expected. Got "%v", want "%v".`,err.Error(), expectedError)
+		t.Errorf(`Error string did not match expected. Got "%v", want "%v".`, err.Error(), expectedError)
 	}
 }
 
@@ -360,19 +360,19 @@ func TestAPIErrorResponseHasInformation(t *testing.T) {
 		"Should return false if all fields are not set",
 		func(t *testing.T) {
 			noInfoTable := []*APIErrorResponse{
-				{// No code
-					Type: "BadRequest",
+				{ // No code
+					Type:         "BadRequest",
 					CombinedInfo: "some info",
 				},
-				{// No Type
-					Code: http.StatusBadRequest,
+				{ // No Type
+					Code:         http.StatusBadRequest,
 					CombinedInfo: "some info",
 				},
-				{// No combined info
+				{ // No combined info
 					Code: http.StatusBadRequest,
 					Type: "BadRequest",
 				},
-				{},// Nothing set
+				{}, // Nothing set
 			}
 
 			for _, v := range noInfoTable {
@@ -390,17 +390,16 @@ func assertQueryStringEqual(valueName, expected string, q url.Values, t *testing
 	}
 }
 
-
 // Examples
 
 func ExampleQueryAttr() {
 	attrs := []AttrQuery{
 		{
-			Name: "parameter",
+			Name:  "parameter",
 			Value: "value",
 			Args: AttrArgs{
-				Operator: OPERATOR_EQUAL,
-				Combinator: COMBINATOR_AND,
+				Operator:   []Operator{OPERATOR_EQUAL},
+				Combinator: []Combinator{COMBINATOR_AND},
 			},
 		},
 	}
@@ -414,7 +413,7 @@ func ExampleQueryAttr() {
 }
 
 func ExampleQueryAuxiliary() {
-	auxiliaryAttributes := []string{"aux1","aux2"}
+	auxiliaryAttributes := []string{"aux1", "aux2"}
 	f := QueryAuxiliary(auxiliaryAttributes...)
 
 	q := url.Values{}
@@ -448,7 +447,7 @@ func ExampleQueryOrderBy() {
 func ExampleQueryScope() {
 	scopes := []Scope{
 		{
-			Scope: "scope",
+			Scope:  "scope",
 			Filter: "filter",
 		},
 	}
@@ -474,8 +473,8 @@ func ExampleQueryWith() {
 
 func ExampleAPIErrorResponse_GetAsError() {
 	APIErr := APIErrorResponse{
-		Code: http.StatusNotFound,
-		Type: "Not found",
+		Code:         http.StatusNotFound,
+		Type:         "Not found",
 		CombinedInfo: "Could not find something.",
 		Errors: []*APIError{
 			{
@@ -487,10 +486,9 @@ func ExampleAPIErrorResponse_GetAsError() {
 
 	err := APIErr.GetAsError()
 
-	fmt.Printf("Error: %v\n",err.Error())
+	fmt.Printf("Error: %v\n", err.Error())
 	// Output: Error: Code: "404", Type: "Not found", Combined info: "Could not find something."
 }
-
 
 func ExamplePublitTime_ConvertPublitTimeToTime() {
 	var str PublitTime = "2017-07-17 10:26:00"
