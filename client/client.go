@@ -6,8 +6,9 @@ package client
 import (
 	"errors"
 	"fmt"
-	"github.com/publitsweden/APIUtilityGoSDK/APILog"
 	"net/http"
+
+	"github.com/publitsweden/APIUtilityGoSDK/APILog"
 )
 
 // The Publit API Client is a struct that holds credential information needed to connect to the Publit API.
@@ -63,14 +64,14 @@ func (c *Client) Call(r *http.Request) (*http.Response, error) {
 
 // CallRaw performs request directly from http.Request (without automatic authentication).
 func (c *Client) CallRaw(r *http.Request) (*http.Response, error) {
-	c.Logger.Info(fmt.Sprintf("Calling URL: %s %s %s", r.Method, r.Host, r.URL.Path))
+	c.Logger.Info(fmt.Sprintf("Calling URL: %s %s %s %s", r.Method, r.Host, r.URL.Path, r.URL.RawQuery))
 	resp, err := c.HTTPClient.Do(r)
 
 	if err != nil {
 		c.Logger.Debug(err)
 	}
 
-	c.Logger.Info(fmt.Sprintf("Request URL: [%s %s %s] responded with status: %s %d",r.Method, r.Host, r.URL.Path, resp.Status, resp.StatusCode))
+	c.Logger.Info(fmt.Sprintf("Request URL: [%s %s %s] responded with status: %s %d", r.Method, r.Host, r.URL.Path, resp.Status, resp.StatusCode))
 
 	// No need to handle token error here since that is not the main objective of this method
 	c.setTokenFromResponse(resp)
@@ -103,7 +104,7 @@ func (c *Client) SetNewAPIToken(r *http.Request) error {
 func (c *Client) setTokenFromResponse(r *http.Response) error {
 	token := r.Header.Get("token")
 	if token == "" {
-		err :=  errors.New("No token received in header. Could not set token from response.")
+		err := errors.New("No token received in header. Could not set token from response.")
 		c.Logger.Debug(err)
 		return err
 
