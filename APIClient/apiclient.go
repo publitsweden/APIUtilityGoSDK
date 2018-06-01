@@ -16,9 +16,14 @@ import (
 
 // General API constants
 const (
-	API_VERSION          = "v2.0"
+	// Supported version of the Publit APIs
+	API_VERSION = "v2.0"
+
+	// Status check resource
 	RESOURCE_STATUSCHECK = "status_check"
-	RESOURCE_TOKEN       = "token"
+
+	// Token resource
+	RESOURCE_TOKEN = "token"
 )
 
 // Endpointer interface declares how an endpoint should be defined
@@ -224,7 +229,7 @@ func (c APIClient) Delete(endpoint Endpointer, result interface{}, headers ...fu
 }
 
 // CompileEndpointURL compiles regular endpoints URL.
-// Endpoints are defined in format baseurl / api / version / endpoint (ex: https://api.publit.com/publishing/v2.0/users)
+// Endpoints are defined in format baseurl / api / version / endpoint
 func (c APIClient) CompileEndpointURL(endpoint string) string {
 	return fmt.Sprintf("%v/%v/%v/%v", c.BaseURL, c.API, API_VERSION, endpoint)
 }

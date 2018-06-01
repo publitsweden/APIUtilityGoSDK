@@ -4,16 +4,18 @@
 package endpoint
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 )
 
 // Resource struct
 type Resource struct {
-	Endpoint   Endpoint
+	// Endpoint is a faked Endpoint enumeration constant of type Endpoint
+	Endpoint Endpoint
+	// Qualifiers is an array of interfaces that can be appended to the endpointmap
 	Qualifiers []interface{}
-	Endpoints  map[Endpoint]string
+	// Endpoints is a map of supported endpoints indexed by an Endpoint enumeration value
+	Endpoints map[Endpoint]string
 }
 
 // Endpoint enumeration type
@@ -30,7 +32,7 @@ func (r Resource) GetEndpoint() (string, error) {
 
 	noOfQualifiers := strings.Count(e, "%v")
 	if noOfQualifiers != len(r.Qualifiers) {
-		return "", errors.New(fmt.Sprintf("Amount of qualifiers did not match expected. Got %v, expected %v", len(r.Qualifiers), noOfQualifiers))
+		return "", fmt.Errorf("Amount of qualifiers did not match expected. Got %v, expected %v", len(r.Qualifiers), noOfQualifiers)
 	}
 
 	if noOfQualifiers > 0 {

@@ -2,6 +2,7 @@ package endpoint_test
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"testing"
 
@@ -93,4 +94,30 @@ func TestReturnsErrorIfQualifiersDoesNotMatchExpected(t *testing.T) {
 	if err == nil {
 		t.Errorf("Did not receive an error but was expecting to.")
 	}
+}
+
+func ExampleResource_GetEndpoint() {
+	// Add the enum endpoint for MY_RESOURCE
+	const MY_RESOURCE Endpoint = iota + 1
+
+	// Create endpoints map
+	var endpoints map[Endpoint]string = map[Endpoint]string{MY_RESOURCE: "my_resource/%v;%v"}
+
+	// Create Resource
+	r := Resource{}
+	r.Endpoints = endpoints
+	r.Endpoint = MY_RESOURCE
+	r.Qualifiers = []interface{}{"qualifier", 1}
+
+	// GetEndpoint
+	s, err := r.GetEndpoint()
+
+	// Handle error
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Endpoint is: %s", s)
+	// Output:
+	// Endpoint is: my_resource/qualifier;1
 }
