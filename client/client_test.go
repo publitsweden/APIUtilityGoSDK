@@ -21,12 +21,12 @@ func TestNew(t *testing.T) {
 	aId := 94
 	c := New(
 		func(c *Client) {
-			c.ClientId = aId
+			c.AccountID = aId
 		},
 	)
 
-	if c.ClientId != aId {
-		t.Errorf(`Client account id did not match expected. Expected "%v", but got "%v"`, aId, c.ClientId)
+	if c.AccountID != aId {
+		t.Errorf(`Client account id did not match expected. Expected "%v", but got "%v"`, aId, c.AccountID)
 	}
 
 	if c.HTTPClient == nil {
@@ -114,7 +114,7 @@ func TestCallSetsBasicAuthHeaders(t *testing.T) {
 	t.Run(
 		"With account id",
 		func(t *testing.T) {
-			c.ClientId = 1
+			c.AccountID = 1
 
 			r := httptest.NewRequest(HTTP_GET, "http://someurl.test", nil)
 			r.RequestURI = ""
@@ -126,7 +126,7 @@ func TestCallSetsBasicAuthHeaders(t *testing.T) {
 			}
 
 			// With account id
-			authString := fmt.Sprintf("%v;%v:%v", c.User, c.ClientId, c.Password)
+			authString := fmt.Sprintf("%v;%v:%v", c.User, c.AccountID, c.Password)
 			expectedBasic := "Basic " + b64enc(authString)
 
 			if r.Header.Get("Authorization") != expectedBasic {
@@ -143,7 +143,7 @@ func TestCallSetsTokenHeaders(t *testing.T) {
 		func(c *Client) {
 			c.User = "someuser"
 			c.Password = "somepassword"
-			c.ClientId = 1
+			c.AccountID = 1
 			c.Token = "sometokenhash"
 			c.HTTPClient = MockClient{}
 			c.Logger = &MockLogger{}
@@ -160,7 +160,7 @@ func TestCallSetsTokenHeaders(t *testing.T) {
 	}
 
 	// Note that password is no longer part of the authString
-	authString := fmt.Sprintf("%v;%v:", c.User, c.ClientId)
+	authString := fmt.Sprintf("%v;%v:", c.User, c.AccountID)
 	expectedBasic := "Basic " + b64enc(authString)
 
 	if r.Header.Get("Authorization") != expectedBasic {
@@ -440,7 +440,7 @@ func ExampleClient_SetNewAPIToken() {
 		func(c *Client) {
 			c.User = "MyUserName"
 			c.Password = "MyPassword"
-			c.ClientId = 12345
+			c.AccountID = 12345
 		},
 	)
 

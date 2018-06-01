@@ -7,20 +7,29 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/publitsweden/APIUtilityGoSDK/APILog"
 )
 
-// The Publit API Client is a struct that holds credential information needed to connect to the Publit API.
+// Client is a struct that holds credential information needed to connect to the Publit API.
 // This is a generic object and does not in itself contain specific information needed to access endpoints.
 // To connect to the API endpoints use the API libraries together with this.
 type Client struct {
-	User       string
-	Password   string
-	ClientId   int
+	//User name of the user attempting to authorise against the Publit APIs.
+	User string
+	// Password of the user attempting to authorise against the Publit APIs.
+	Password string
+	// AccountID the id of the Publit account the client wants to connect to.
+	AccountID int
+	// HTTPClient an object that implement the Doer interface.
 	HTTPClient Doer
-	Token      string
-	Logger     Logger
+	// Token is the authorisation token that can be recieved from the Publit APIs.
+	Token string
+	// Logger is the logger object used for logging informational and debug messages.
+	Logger Logger
+	// M is a mutex and is used for not causing race-conditions on the Token attribute if several goroutines simultanously is trying to update it.
+	M *sync.Mutex
 }
 
 // Doer is an interface representing the ability to do a request.
@@ -35,10 +44,11 @@ type Logger interface {
 	Info(message interface{})
 }
 
-// Creates a New API Client.
-// Automatically sets HTTPClient to http.DefaultClient and Logger to APILog.APILog if not explicitly set.
+// New creates a New API Client.
+// Automatically sets HTTPClient to http.DefaultClient and Logger to APILog.APILog if not explicitly set. And also sets an empty sync.Mutex to M.
 func New(configFunc ...func(c *Client)) *Client {
 	c := &Client{}
+	c.M = &sync.Mutex{}
 
 	for _, v := range configFunc {
 		v(c)
@@ -73,8 +83,15 @@ func (c *Client) CallRaw(r *http.Request) (*http.Response, error) {
 
 	c.Logger.Info(fmt.Sprintf("Request URL: [%s %s %s] responded with status: %s %d", r.Method, r.Host, r.URL.Path, resp.Status, resp.StatusCode))
 
-	// No need to handle token error here since that is not the main objective of this method
-	c.setTokenFromResponse(resp)
+	// IF token is not set attempt to set it using the response from the request
+	c.M.Lock()
+	t := c.Token
+	c.M.Unlock()
+
+	if t == "" {
+		// No need to handle token error here since that is not the main objective of this method
+		c.setTokenFromResponse(resp)
+	}
 
 	return resp, err
 }
@@ -110,15 +127,17 @@ func (c *Client) setTokenFromResponse(r *http.Response) error {
 
 	}
 
+	c.M.Lock()
 	c.Token = token
+	c.M.Unlock()
 
 	return nil
 }
 
 func (c *Client) setAuth(r *http.Request) {
 	username := c.User + ";"
-	if c.ClientId != 0 {
-		username = fmt.Sprintf("%v;%v", c.User, c.ClientId)
+	if c.AccountID != 0 {
+		username = fmt.Sprintf("%v;%v", c.User, c.AccountID)
 	}
 
 	password := c.Password
@@ -130,13 +149,15 @@ func (c *Client) setAuth(r *http.Request) {
 	r.SetBasicAuth(username, password)
 }
 
-// Getter for authentication token.
+// GetAuthToken getter for authentication token.
 func (c *Client) GetAuthToken() string {
 	return c.Token
 }
 
-// Unset authentication token.
+// UnsetAuthToken unsets authentication token.
 // If need to re-authenticate, this can be used to force re-authentication for the next call.
 func (c *Client) UnsetAuthToken() {
+	c.M.Lock()
 	c.Token = ""
+	c.M.Unlock()
 }
