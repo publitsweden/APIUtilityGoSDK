@@ -35,6 +35,96 @@ c := client.New(
 
 The client has builtin methods to authorise a request and set authorisation token per request if not previously set.
 
+### APIClient
+The APIClient package is a wrapper around the client and exposes easy access methods for the most commonly used API endpoints in Publit. The APICLient-struct contains methods for performing Get, Put, Post and Delete request against the Publit APIs. 
+
+To create an API-specific implementation of the package (against the Publit APIs) is as simple as:
+```Go
+SpecificAPI := "someapi"
+c := &APIClient.APIClient{API: SpecificAPI}
+```
+
+And to create a specific resource-package can be done as follows:
+```Go
+package MyResource
+
+// Import APIClient and Endpoint
+import(
+    "github.com/publitsweden/APIUtilityGoSDK/APIClient"
+    "github.com/publitsweden/APIUtilityGoSDK/Endpoint"
+)
+
+// Create endpoint enumeration indexes
+const (
+    INDEX endpoint.Endpoint = 1 + iota
+    SHOW
+    CREATE
+    UPDATE
+    DELETE
+)
+
+// Create endpoints map for "MyResource"
+var endpoints = map[endpoint.Endpoint]string{
+    INDEX: "api_resource",
+    SHOW: "api_resource/%v",
+    CREATE: "api_resource",
+    UPDATE: "api_resource/%v",
+    DELETE: "api_resource/%v",
+}
+
+// MyResource is a struct containing the possible endpoints for the resource
+type MyResource struct {
+    Endpoint endpoint.Resource
+}
+
+// New creates a new MyResource struct (pointer) and sets the endpoints
+func New() *MyResource {
+    r := &MyResource{
+        Endpoint: endpoint.Resource{
+            Endpoints: 
+        }
+    }
+
+    return r
+}
+
+// Index is a method call to the index endpoint of the resource
+func (r *MyResource) Index(c *APIClient.APIClient, model interface{}, queryParams ...func(q url.Values)) error {
+    r.Endpoint.Endpoint = INDEX
+    return c.Get(r.Endpoint, model, queryParams)
+}
+
+// Show is a method call to the Show endpoint of the resource
+func (r *MyResource) Show(c *APIClient.APIClient, id int, model interface{}, queryParams ...func(q url.Values)) error {
+    r.Endpoint.Endpoint = SHOW
+    // The qualifiers are used to populate the "sprintf"-portion of the endpoint
+    r.Endpoint.Qualifiers = []interface{}{id}
+    return c.Get(r.Endpoint, model, queryParams)
+}
+
+// Create is a method call to the create endpoint of the resource
+func (r *MyResource) Create(c *APIClient.APIClient, model interface{}, result interface{}) error {
+    r.Endpoint.Endpoint = CREATE
+    return c.Post(r.Endpoint, model, result)
+}
+
+// Update is a method call to the update endpoint of the resource
+func (r *MyResource) Update(c *APIClient.APIClient, id int, model interface{}, result interface{}) error {
+    r.Endpoint.Endpoint = UPDATE
+    // The qualifiers are used to populate the "sprintf"-portion of the endpoint
+    r.Endpoint.Qualifiers = []interface{}{id}
+    return c.Post(r.Endpoint, model, result)
+}
+
+// Delete is a method call to the delete endpoint of the resource
+func (r *MyResource) Delete(c *APIClient.APIClient, id int, result interface{}) error {
+    r.Endpoint.Endpoint = UPDATE
+    // The qualifiers are used to populate the "sprintf"-portion of the endpoint
+    r.Endpoint.Qualifiers = []interface{}{id}
+    return c.Delete(r.Endpoint, result)
+}
+```
+
 ### APILog
 The APILog package contains logging methods that the PublitGoSDK will use for logging internal messages.
 The APILog is created automatically and bound to client.Client when creating it with client.New().
