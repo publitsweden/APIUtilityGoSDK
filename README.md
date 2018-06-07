@@ -88,41 +88,43 @@ func New() *MyResource {
     return r
 }
 
+// A struct that represents MyResource
+type MyResource struct {
+    FieldA interface{} `json:field_a`
+}
+
 // Index is a method call to the index endpoint of the resource
 func (r *MyResource) Index(c *APIClient.APIClient, model interface{}, queryParams ...func(q url.Values)) error {
+    // Set the endpoint to INDEX
     r.Endpoint.Endpoint = INDEX
     return c.Get(r.Endpoint, model, queryParams)
 }
 
 // Show is a method call to the Show endpoint of the resource
 func (r *MyResource) Show(c *APIClient.APIClient, id int, model interface{}, queryParams ...func(q url.Values)) error {
+    // Set the endpoint to SHOW
     r.Endpoint.Endpoint = SHOW
     // The qualifiers are used to populate the "sprintf"-portion of the endpoint
     r.Endpoint.Qualifiers = []interface{}{id}
+
+    // Instead of requiring a "model" to be sent to the method we could declare the method to create a "MyResource"-struct,
+    // populate it and have it returned (with the return values of the method defined as (*MyResource, error)), like so:
+    // model := &MyResource{}
+    // err := c.Get(r.Endpoint, model, queryParams)
+    // return model, error
+
     return c.Get(r.Endpoint, model, queryParams)
 }
 
 // Create is a method call to the create endpoint of the resource
 func (r *MyResource) Create(c *APIClient.APIClient, model interface{}, result interface{}) error {
+    // Set the endpoint to CREATE
     r.Endpoint.Endpoint = CREATE
     return c.Post(r.Endpoint, model, result)
 }
 
-// Update is a method call to the update endpoint of the resource
-func (r *MyResource) Update(c *APIClient.APIClient, id int, model interface{}, result interface{}) error {
-    r.Endpoint.Endpoint = UPDATE
-    // The qualifiers are used to populate the "sprintf"-portion of the endpoint
-    r.Endpoint.Qualifiers = []interface{}{id}
-    return c.Post(r.Endpoint, model, result)
-}
+// and so on...
 
-// Delete is a method call to the delete endpoint of the resource
-func (r *MyResource) Delete(c *APIClient.APIClient, id int, result interface{}) error {
-    r.Endpoint.Endpoint = UPDATE
-    // The qualifiers are used to populate the "sprintf"-portion of the endpoint
-    r.Endpoint.Qualifiers = []interface{}{id}
-    return c.Delete(r.Endpoint, result)
-}
 ```
 
 ### APILog
