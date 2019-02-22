@@ -37,6 +37,7 @@ type APICaller interface {
 	Call(r *http.Request) (*http.Response, error)
 	CallRaw(r *http.Request) (*http.Response, error)
 	SetNewAPIToken(r *http.Request) error
+	UnsetAuthToken()
 }
 
 // APIClient hold Client information for connecting to the Publit APIs and base URLs.

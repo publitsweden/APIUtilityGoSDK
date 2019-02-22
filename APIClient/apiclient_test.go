@@ -627,6 +627,8 @@ func (c *MockAPICaller) SetNewAPIToken(r *http.Request) error {
 	return nil
 }
 
+func (c *MockAPICaller) UnsetAuthToken() {}
+
 // Creates new endpoint.
 func NewEndpoint() Endpoint { return Endpoint{1, false} }
 
