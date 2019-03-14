@@ -585,6 +585,20 @@ func TestCanMakeResponseError(t *testing.T) {
 	)
 }
 
+func TestCanUnsetAuthToken(t *testing.T) {
+	unsetAuthTokenCount := 0
+	caller := &MockAPICaller{
+		UnsetAuthTokenCallback: func() { unsetAuthTokenCount++ },
+	}
+	c := &APIClient{caller, "somebaseurl", TestAPI}
+
+	c.UnsetAuthToken()
+
+	if unsetAuthTokenCount != 1 {
+		t.Errorf("Expected UnsetAuthToken to run exactly 1 times, but ran %d times.", unsetAuthTokenCount)
+	}
+}
+
 func createCallerResponse(status int, body string) *http.Response {
 	resp := &http.Response{}
 	resp.StatusCode = status
@@ -597,10 +611,11 @@ func createCallerResponse(status int, body string) *http.Response {
 }
 
 type MockAPICaller struct {
-	ReturnErrors     bool
-	Response         *http.Response
-	CallTestCallback func(t *testing.T, r *http.Request)
-	T                *testing.T
+	ReturnErrors           bool
+	Response               *http.Response
+	CallTestCallback       func(t *testing.T, r *http.Request)
+	UnsetAuthTokenCallback func()
+	T                      *testing.T
 }
 
 func (c *MockAPICaller) Call(r *http.Request) (*http.Response, error) {
@@ -627,7 +642,11 @@ func (c *MockAPICaller) SetNewAPIToken(r *http.Request) error {
 	return nil
 }
 
-func (c *MockAPICaller) UnsetAuthToken() {}
+func (c *MockAPICaller) UnsetAuthToken() {
+	if c.UnsetAuthTokenCallback != nil {
+		c.UnsetAuthTokenCallback()
+	}
+}
 
 // Creates new endpoint.
 func NewEndpoint() Endpoint { return Endpoint{1, false} }

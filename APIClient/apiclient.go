@@ -253,3 +253,8 @@ func MakeResponseError(resp *http.Response) error {
 	// Default
 	return fmt.Errorf(`Response not ok. No information given. Code: "%v"`, resp.StatusCode)
 }
+
+// UnsetAuthToken wraps undest autho token from the APICaller to the APIClient
+func (c *APIClient) UnsetAuthToken() {
+	c.Client.UnsetAuthToken()
+}
