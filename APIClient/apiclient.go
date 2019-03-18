@@ -42,9 +42,28 @@ type APICaller interface {
 
 // APIClient hold Client information for connecting to the Publit APIs and base URLs.
 type APIClient struct {
-	Client  APICaller
-	BaseURL string
-	API     string
+	Client    APICaller
+	BaseURL   string
+	API       string
+	respCodes []int
+}
+
+// Adds response codes to client
+func (c *APIClient) addResponseCode(code int) {
+	c.respCodes = append(c.respCodes, code)
+}
+
+// Retrieves last inputted response code
+func (c *APIClient) GetLastResponseCode() int {
+	if len(c.respCodes) == 0 {
+		return 0
+	}
+	return c.respCodes[len(c.respCodes)-1]
+}
+
+// GetResponseCodes retrieves all response codes
+func (c *APIClient) GetResponseCodes() []int {
+	return c.respCodes
 }
 
 // StatusCheck checks if the Publit service is up.
@@ -63,6 +82,7 @@ func (c *APIClient) StatusCheck() (bool, error) {
 
 	// Use CallRaw since no authentication is needed for status check.
 	r, err := c.Client.CallRaw(req)
+	c.addResponseCode(r.StatusCode)
 
 	if err != nil {
 		return false, err
@@ -76,7 +96,7 @@ func (c *APIClient) StatusCheck() (bool, error) {
 }
 
 // Compiles statuscheck URL against the admin API.
-func (c APIClient) compileStatusCheckURL() (string, error) {
+func (c *APIClient) compileStatusCheckURL() (string, error) {
 	if c.BaseURL == "" {
 		return "", errors.New("Could not compile status check URL. Missing APIClient.BaseURL")
 	}
@@ -85,7 +105,7 @@ func (c APIClient) compileStatusCheckURL() (string, error) {
 }
 
 // SetNewAPIToken creates and sets new token to client.
-func (c APIClient) SetNewAPIToken() error {
+func (c *APIClient) SetNewAPIToken() error {
 	url, err := c.compileTokenURL()
 	if err != nil {
 		return err
@@ -107,7 +127,7 @@ func (c APIClient) compileTokenURL() (string, error) {
 }
 
 // Get Performs a GET method action against the Publit admin API.
-func (c APIClient) Get(endpoint Endpointer, model interface{}, queryParams ...func(q url.Values)) error {
+func (c *APIClient) Get(endpoint Endpointer, model interface{}, queryParams ...func(q url.Values)) error {
 	epoint, err := endpoint.GetEndpoint()
 	if err != nil {
 		return err
@@ -124,6 +144,7 @@ func (c APIClient) Get(endpoint Endpointer, model interface{}, queryParams ...fu
 
 	resp, err := c.Client.Call(req)
 	defer resp.Body.Close()
+	c.addResponseCode(resp.StatusCode)
 
 	if err != nil {
 		return err
@@ -143,17 +164,17 @@ func (c APIClient) Get(endpoint Endpointer, model interface{}, queryParams ...fu
 }
 
 // Post performs a POST method action against the Publit API.
-func (c APIClient) Post(endpoint Endpointer, payload interface{}, result interface{}, headers ...func(h *http.Header)) error {
+func (c *APIClient) Post(endpoint Endpointer, payload interface{}, result interface{}, headers ...func(h *http.Header)) error {
 	return c.postPut(http.MethodPost, endpoint, payload, result, headers...)
 }
 
 // Put performs a PUT method action against the Publit API.
-func (c APIClient) Put(endpoint Endpointer, payload interface{}, result interface{}, headers ...func(h *http.Header)) error {
+func (c *APIClient) Put(endpoint Endpointer, payload interface{}, result interface{}, headers ...func(h *http.Header)) error {
 	return c.postPut(http.MethodPut, endpoint, payload, result, headers...)
 }
 
 // postPut performs a post or put method action against the Publit admin API.
-func (c APIClient) postPut(method string, endpoint Endpointer, payload interface{}, result interface{}, headers ...func(h *http.Header)) error {
+func (c *APIClient) postPut(method string, endpoint Endpointer, payload interface{}, result interface{}, headers ...func(h *http.Header)) error {
 	epoint, err := endpoint.GetEndpoint()
 	if err != nil {
 		return err
@@ -175,6 +196,7 @@ func (c APIClient) postPut(method string, endpoint Endpointer, payload interface
 	}
 
 	resp, err := c.Client.Call(req)
+	c.addResponseCode(resp.StatusCode)
 	if err != nil {
 		return err
 	}
@@ -197,7 +219,7 @@ func (c APIClient) postPut(method string, endpoint Endpointer, payload interface
 }
 
 // Delete performs a DELETE http call against the Publit API.
-func (c APIClient) Delete(endpoint Endpointer, result interface{}, headers ...func(h *http.Header)) error {
+func (c *APIClient) Delete(endpoint Endpointer, result interface{}, headers ...func(h *http.Header)) error {
 	epoint, err := endpoint.GetEndpoint()
 	if err != nil {
 		return err
@@ -211,6 +233,7 @@ func (c APIClient) Delete(endpoint Endpointer, result interface{}, headers ...fu
 	}
 
 	resp, err := c.Client.Call(req)
+	c.addResponseCode(resp.StatusCode)
 	if err != nil {
 		return err
 	}

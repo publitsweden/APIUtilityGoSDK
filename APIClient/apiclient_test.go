@@ -30,12 +30,16 @@ func TestCanCheckStatus(t *testing.T) {
 
 			baseurl := "somebaseurl"
 
-			c := &APIClient{caller, baseurl, TestAPI}
+			c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
 			ok, _ := c.StatusCheck()
 
 			if !ok {
 				t.Error("Expected status check to pass, but received false.")
+			}
+
+			if c.GetLastResponseCode() != http.StatusOK {
+				t.Errorf("Unexpected response code. Expected %d, got %d", http.StatusOK, c.GetLastResponseCode())
 			}
 		},
 	)
@@ -49,12 +53,16 @@ func TestCanCheckStatus(t *testing.T) {
 
 			baseurl := "somebaseurl"
 
-			c := &APIClient{caller, baseurl, TestAPI}
+			c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
 			ok, _ := c.StatusCheck()
 
 			if ok {
 				t.Error("Expected status check to fail, but received true.")
+			}
+
+			if c.GetLastResponseCode() != http.StatusBadRequest {
+				t.Errorf("Unexpected response code. Expected %d, got %d", http.StatusBadRequest, c.GetLastResponseCode())
 			}
 		},
 	)
@@ -69,7 +77,7 @@ func TestCanCheckStatus(t *testing.T) {
 
 			baseurl := "somebaseurl"
 
-			c := &APIClient{caller, baseurl, TestAPI}
+			c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
 			ok, err := c.StatusCheck()
 
@@ -79,6 +87,10 @@ func TestCanCheckStatus(t *testing.T) {
 
 			if err == nil {
 				t.Error("Expected an error to be set but did not receive one.")
+			}
+
+			if c.GetLastResponseCode() != http.StatusBadRequest {
+				t.Errorf("Unexpected response code. Expected %d, got %d", http.StatusBadRequest, c.GetLastResponseCode())
 			}
 		},
 	)
@@ -120,7 +132,7 @@ func TestCanSetNewAPIToken(t *testing.T) {
 
 			baseurl := "somebaseurl"
 
-			c := &APIClient{caller, baseurl, TestAPI}
+			c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
 			err := c.SetNewAPIToken()
 
@@ -139,7 +151,7 @@ func TestCanSetNewAPIToken(t *testing.T) {
 
 			baseurl := "somebaseurl"
 
-			c := &APIClient{caller, baseurl, TestAPI}
+			c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
 			err := c.SetNewAPIToken()
 
@@ -176,7 +188,7 @@ func TestCanPerformGetRequest(t *testing.T) {
 
 	baseurl := "somebaseurl"
 
-	c := &APIClient{caller, baseurl, TestAPI}
+	c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
 	int := &struct {
 		Some string `json:"some"`
@@ -191,6 +203,10 @@ func TestCanPerformGetRequest(t *testing.T) {
 	if int.Some != "body" {
 		t.Error("Unmarshalled struct did not match expected.")
 	}
+
+	if c.GetLastResponseCode() != http.StatusOK {
+		t.Errorf("Unexpected response code. Expected %d, got %d", http.StatusOK, c.GetLastResponseCode())
+	}
 }
 
 func TestGetReturnsErrorIfCallFails(t *testing.T) {
@@ -203,7 +219,7 @@ func TestGetReturnsErrorIfCallFails(t *testing.T) {
 
 	baseurl := "somebaseurl"
 
-	c := &APIClient{caller, baseurl, TestAPI}
+	c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
 	int := &struct{}{}
 	err := c.Get(NewEndpoint(), int)
@@ -221,13 +237,17 @@ func TestGetReturnsErrorIfStatusCodeNotOk(t *testing.T) {
 
 	baseurl := "somebaseurl"
 
-	c := &APIClient{caller, baseurl, TestAPI}
+	c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
 	int := &struct{}{}
 	err := c.Get(NewEndpoint(), int)
 
 	if err == nil {
 		t.Error("Expected an error due to status not ok but did not receive one.")
+	}
+
+	if c.GetLastResponseCode() != http.StatusBadRequest {
+		t.Errorf("Unexpected response code. Expected %d, got %d", http.StatusBadRequest, c.GetLastResponseCode())
 	}
 }
 
@@ -239,12 +259,16 @@ func TestGetReturnsErrorIfBodyCanNotBeUnmarshalled(t *testing.T) {
 
 	baseurl := "somebaseurl"
 
-	c := &APIClient{caller, baseurl, TestAPI}
+	c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 	interf := &struct{}{}
 	err := c.Get(NewEndpoint(), interf)
 
 	if err == nil {
 		t.Error("Expected an error due to unmarshalling errors but did not receive one.")
+	}
+
+	if c.GetLastResponseCode() != http.StatusOK {
+		t.Errorf("Unexpected response code. Expected %d, got %d", http.StatusOK, c.GetLastResponseCode())
 	}
 }
 
@@ -254,7 +278,7 @@ func TestGetReturnsErrorIfEndpointerReturnsAnError(t *testing.T) {
 	caller := &MockAPICaller{}
 	baseurl := "somebaseurl"
 
-	c := &APIClient{caller, baseurl, TestAPI}
+	c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
 	ep := NewEndpoint()
 	ep.ShouldFail = true
@@ -296,7 +320,7 @@ func TestCanPerformPOSTRequest(t *testing.T) {
 	baseurl := "somebaseurl"
 	caller.Response = createCallerResponse(http.StatusOK, `{"name":"newTestName"}`)
 
-	c := &APIClient{caller, baseurl, TestAPI}
+	c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
 	err := c.Post(NewEndpoint(), &i, j)
 
@@ -307,6 +331,10 @@ func TestCanPerformPOSTRequest(t *testing.T) {
 	if i.Name != "newTestName" {
 		t.Error("Struct did not have expected value.")
 	}
+
+	if c.GetLastResponseCode() != http.StatusOK {
+		t.Errorf("Unexpected response code. Expected %d, got %d", http.StatusOK, c.GetLastResponseCode())
+	}
 }
 
 func TestPostReturnsErrorIfEndpointerReturnsAnError(t *testing.T) {
@@ -315,7 +343,7 @@ func TestPostReturnsErrorIfEndpointerReturnsAnError(t *testing.T) {
 	caller := &MockAPICaller{}
 	baseurl := "somebaseurl"
 
-	c := &APIClient{caller, baseurl, TestAPI}
+	c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
 	i := struct {
 		Name string `json:"name"`
@@ -359,7 +387,7 @@ func TestCanPerformPUTRequest(t *testing.T) {
 	baseurl := "somebaseurl"
 	caller.Response = createCallerResponse(http.StatusOK, `{"name":"newTestName"}`)
 
-	c := &APIClient{caller, baseurl, TestAPI}
+	c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
 	err := c.Put(NewEndpoint(), &i, j)
 
@@ -369,6 +397,10 @@ func TestCanPerformPUTRequest(t *testing.T) {
 
 	if i.Name != "newTestName" {
 		t.Error("Struct did not have expected value.")
+	}
+
+	if c.GetLastResponseCode() != http.StatusOK {
+		t.Errorf("Unexpected response code. Expected %d, got %d", http.StatusOK, c.GetLastResponseCode())
 	}
 }
 
@@ -384,7 +416,7 @@ func TestCanPerformDeleteRequest(t *testing.T) {
 	baseurl := "somebaseurl"
 	caller.Response = createCallerResponse(http.StatusOK, `{"name":"newTestName"}`)
 
-	c := &APIClient{caller, baseurl, TestAPI}
+	c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
 	err := c.Delete(NewEndpoint(), &i)
 
@@ -395,6 +427,10 @@ func TestCanPerformDeleteRequest(t *testing.T) {
 	if i.Name != "newTestName" {
 		t.Error("Struct did not have expected value.")
 	}
+
+	if c.GetLastResponseCode() != http.StatusOK {
+		t.Errorf("Unexpected response code. Expected %d, got %d", http.StatusOK, c.GetLastResponseCode())
+	}
 }
 
 func TestDeleteReturnsErrorIfEndpointerReturnsAnError(t *testing.T) {
@@ -403,7 +439,7 @@ func TestDeleteReturnsErrorIfEndpointerReturnsAnError(t *testing.T) {
 	caller := &MockAPICaller{}
 	baseurl := "somebaseurl"
 
-	c := &APIClient{caller, baseurl, TestAPI}
+	c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
 	i := struct {
 		Name string `json:"name"`
@@ -434,7 +470,7 @@ func TestPostPutErrors(t *testing.T) {
 
 				baseurl := "somebaseurl"
 
-				c := &APIClient{caller, baseurl, TestAPI}
+				c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
 				// Run method through POST (would be just as fine with PUT
 				err := c.Post(NewEndpoint(), &i, &i)
@@ -451,7 +487,7 @@ func TestPostPutErrors(t *testing.T) {
 				caller.Response = createCallerResponse(http.StatusOK, "")
 
 				baseurl := "somebaseurl"
-				c := &APIClient{caller, baseurl, TestAPI}
+				c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
 				i := struct{}{}
 				// Run method through POST (would be just as fine with PUT
@@ -469,7 +505,7 @@ func TestPostPutErrors(t *testing.T) {
 				caller.Response = createCallerResponse(http.StatusBadRequest, "")
 
 				baseurl := "somebaseurl"
-				c := &APIClient{caller, baseurl, TestAPI}
+				c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
 				i := struct{ Name string }{}
 				err := c.Post(NewEndpoint(), &i, &i)
@@ -486,7 +522,7 @@ func TestPostPutErrors(t *testing.T) {
 				caller.Response = createCallerResponse(http.StatusOK, `{"somwire,ddgd:""jsonstructur,,,:"newTestName"}`)
 
 				baseurl := "somebaseurl"
-				c := &APIClient{caller, baseurl, TestAPI}
+				c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
 				i := struct {
 					Name string `json:"name"`
@@ -590,13 +626,45 @@ func TestCanUnsetAuthToken(t *testing.T) {
 	caller := &MockAPICaller{
 		UnsetAuthTokenCallback: func() { unsetAuthTokenCount++ },
 	}
-	c := &APIClient{caller, "somebaseurl", TestAPI}
+	c := &APIClient{Client: caller, BaseURL: "somebaseurl", API: TestAPI}
 
 	c.UnsetAuthToken()
 
 	if unsetAuthTokenCount != 1 {
 		t.Errorf("Expected UnsetAuthToken to run exactly 1 times, but ran %d times.", unsetAuthTokenCount)
 	}
+}
+
+// TestREsponseErrors by running the status check a few times
+// Since it's the easiest request
+func TestResponseErrors(t *testing.T) {
+	caller := &MockAPICaller{}
+	baseurl := "somebaseurl"
+
+	c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
+
+	codes := []int{
+		http.StatusOK,
+		http.StatusBadRequest,
+		http.StatusUnauthorized,
+	}
+
+	for _, code := range codes {
+		caller.Response = createCallerResponse(code, "")
+
+		c.StatusCheck()
+
+		if c.GetLastResponseCode() != code {
+			t.Errorf("Unexpected response code. Expected %d, got %d", code, c.GetLastResponseCode())
+		}
+	}
+
+	allCodes := c.GetResponseCodes()
+
+	if len(allCodes) != len(codes) {
+		t.Error("The lentgth of the returned codes did not match the expected.")
+	}
+
 }
 
 func createCallerResponse(status int, body string) *http.Response {
