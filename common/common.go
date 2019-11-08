@@ -205,17 +205,16 @@ func QueryAttr(attributes ...AttrQuery) func(q url.Values) {
 			if !v.Args.IsEmpty() {
 				argsAttr := fmt.Sprintf("%v%v", v.Name, QUERY_ARGS_SUFFIX)
 
-				opstr := []string{}
-				for _, op := range v.Args.Operator {
-					opstr = append(opstr, op.AsString())
+				opCombStr := []string{}
+				for i, op := range v.Args.Operator {
+					argsstr := op.AsString()
+					if len(v.Args.Combinator) > i {
+						argsstr = fmt.Sprintf("%v;%v", op.AsString(), v.Args.Combinator[i].AsString())
+					}
+					opCombStr = append(opCombStr, argsstr)
 				}
-				combstr := []string{}
-				for _, comb := range v.Args.Combinator {
-					combstr = append(combstr, comb.AsString())
-				}
-				argstr := fmt.Sprintf("%v;%v", strings.Join(opstr[:], ","), strings.Join(combstr[:], ","))
 
-				q.Add(argsAttr, argstr)
+				q.Add(argsAttr, strings.Join(opCombStr[:], ","))
 			}
 		}
 	}

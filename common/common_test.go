@@ -261,6 +261,35 @@ func TestCanSetAttributeQuery(t *testing.T) {
 		},
 	)
 
+	t.Run(
+		"With multiple args",
+		func(t *testing.T) {
+			q := url.Values{}
+
+			attrs := []AttrQuery{
+				{
+					Name:  "myAttr",
+					Value: "myValue,otherVal",
+					Args: AttrArgs{
+						Operator:   []Operator{OPERATOR_EQUAL, OPERATOR_NOT_EQUAL},
+						Combinator: []Combinator{COMBINATOR_AND, COMBINATOR_AND},
+					},
+				},
+			}
+
+			ParamFunc := QueryAttr(attrs...)
+
+			ParamFunc(q)
+
+			setAttr := attrs[0]
+
+			assertQueryStringEqual(setAttr.Name, setAttr.Value, q, t)
+
+			expectedArgs := "EQUAL;AND,NOT_EQUAL;AND"
+			assertQueryStringEqual(setAttr.Name+QUERY_ARGS_SUFFIX, expectedArgs, q, t)
+		},
+	)
+
 }
 
 func TestCanConvertPublitTimeToTime(t *testing.T) {
