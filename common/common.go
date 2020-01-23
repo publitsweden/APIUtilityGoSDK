@@ -22,6 +22,7 @@ const (
 	QUERY_KEY_ORDER     = "order_by"
 	QUERY_KEY_ORDER_DIR = "order_dir"
 	QUERY_ARGS_SUFFIX   = "_args"
+	QUERY_KEY_GROUP_BY  = "group_by"
 )
 
 // Operator describes the different operators implemented in Publits general API interface.
@@ -180,6 +181,15 @@ func QueryOrderBy(attributes []string, dir OrderDir) func(q url.Values) {
 		if dir != 0 {
 			q.Add(QUERY_KEY_ORDER_DIR, dir.AsString())
 		}
+	}
+}
+
+// QueryGroupBy sets group by query to API query.
+func QueryGroupBy(attributes []string) func(q url.Values) {
+	groupByString := strings.Join(attributes, ",")
+
+	return func(q url.Values) {
+		q.Add(QUERY_KEY_GROUP_BY, groupByString)
 	}
 }
 

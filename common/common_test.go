@@ -289,7 +289,21 @@ func TestCanSetAttributeQuery(t *testing.T) {
 			assertQueryStringEqual(setAttr.Name+QUERY_ARGS_SUFFIX, expectedArgs, q, t)
 		},
 	)
+}
 
+func TestCanSetGroupByQuery(t *testing.T) {
+	t.Parallel()
+
+	q := url.Values{}
+
+	groupBy := []string{"attr1", "attr2"}
+	ParamFunc := QueryGroupBy(groupBy)
+
+	ParamFunc(q)
+
+	expected := strings.Join(groupBy, ",")
+
+	assertQueryStringEqual(QUERY_KEY_GROUP_BY, expected, q, t)
 }
 
 func TestCanConvertPublitTimeToTime(t *testing.T) {
