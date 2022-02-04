@@ -127,22 +127,12 @@ func (c APIClient) compileTokenURL() (string, error) {
 }
 
 // Get Performs a GET method action against the Publit admin API.
+// Also decodes response body to json
 func (c *APIClient) Get(endpoint Endpointer, model interface{}, queryParams ...func(q url.Values)) error {
-	epoint, err := endpoint.GetEndpoint()
+	resp, err := c.GetWithRawResponse(endpoint, queryParams...)
 	if err != nil {
 		return err
 	}
-
-	endUrl := c.CompileEndpointURL(epoint)
-	req, _ := http.NewRequest(http.MethodGet, endUrl, nil)
-
-	q := req.URL.Query()
-	for _, v := range queryParams {
-		v(q)
-	}
-	req.URL.RawQuery = q.Encode()
-
-	resp, err := c.Client.Call(req)
 	defer resp.Body.Close()
 	c.addResponseCode(resp.StatusCode)
 
@@ -161,6 +151,25 @@ func (c *APIClient) Get(endpoint Endpointer, model interface{}, queryParams ...f
 	}
 
 	return nil
+}
+
+// GetWithRawResponse perform get call and returns raw response body
+func (c *APIClient) GetWithRawResponse(endpoint Endpointer, queryParams ...func(q url.Values)) (resp *http.Response, err error) {
+	epoint, err := endpoint.GetEndpoint()
+	if err != nil {
+		return
+	}
+
+	endUrl := c.CompileEndpointURL(epoint)
+	req, _ := http.NewRequest(http.MethodGet, endUrl, nil)
+
+	q := req.URL.Query()
+	for _, v := range queryParams {
+		v(q)
+	}
+	req.URL.RawQuery = q.Encode()
+
+	return c.Client.Call(req)
 }
 
 // Post performs a POST method action against the Publit API.

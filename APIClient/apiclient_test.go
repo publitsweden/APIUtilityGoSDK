@@ -180,6 +180,33 @@ func TestCanSetNewAPIToken(t *testing.T) {
 	)
 }
 
+func TestCanPerformGetRequestWithRawResponse(t *testing.T) {
+	caller := &MockAPICaller{}
+	expectedBody := `{"some":"body"}`
+	caller.Response = createCallerResponse(http.StatusOK, expectedBody)
+
+	baseurl := "somebaseurl"
+
+	c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
+
+	resp, err := c.GetWithRawResponse(NewEndpoint())
+	if err != nil {
+		t.Error("Unexpected error.", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Unexpected status code. Got %d, expected %d", resp.StatusCode, http.StatusOK)
+	}
+
+	defer resp.Body.Close()
+
+	body,_ := ioutil.ReadAll(resp.Body)
+
+	if string(body) != string(expectedBody) {
+		t.Errorf("Unexpected body. Expected %s, got %s", expectedBody, body)
+	}
+}
+
 func TestCanPerformGetRequest(t *testing.T) {
 	t.Parallel()
 
@@ -190,17 +217,17 @@ func TestCanPerformGetRequest(t *testing.T) {
 
 	c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
-	int := &struct {
+	model := &struct {
 		Some string `json:"some"`
 	}{}
 
-	err := c.Get(NewEndpoint(), int)
+	err := c.Get(NewEndpoint(), model)
 
 	if err != nil {
 		t.Error("Expected Get to pass but received error.", err.Error())
 	}
 
-	if int.Some != "body" {
+	if model.Some != "body" {
 		t.Error("Unmarshalled struct did not match expected.")
 	}
 
@@ -221,8 +248,8 @@ func TestGetReturnsErrorIfCallFails(t *testing.T) {
 
 	c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
-	int := &struct{}{}
-	err := c.Get(NewEndpoint(), int)
+	model := &struct{}{}
+	err := c.Get(NewEndpoint(), model)
 
 	if err == nil {
 		t.Error("Expected an error due to call failed but did not receive one.")
@@ -239,8 +266,8 @@ func TestGetReturnsErrorIfStatusCodeNotOk(t *testing.T) {
 
 	c := &APIClient{Client: caller, BaseURL: baseurl, API: TestAPI}
 
-	int := &struct{}{}
-	err := c.Get(NewEndpoint(), int)
+	model := &struct{}{}
+	err := c.Get(NewEndpoint(), model)
 
 	if err == nil {
 		t.Error("Expected an error due to status not ok but did not receive one.")
